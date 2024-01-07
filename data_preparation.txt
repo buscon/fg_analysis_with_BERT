@@ -1,0 +1,7 @@
+1. paste transcript in vim
+2. remove speaker lines:
+:g/Sprecher/d
+3. check for empty lines or timestamps and remove them
+
+4. remove empty space at the end of each line
+:%s/\s\+$//e
