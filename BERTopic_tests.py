@@ -6,9 +6,8 @@ import pandas as pd
 from bertopic import BERTopic
 
 # Change the default renderer to svg
-#import plotly.io as pio
-#pio.renderers.default = "svg"
-
+# import plotly.io as pio
+# pio.renderers.default = "svg"
 
 df = pd.read_csv(
     '/home/marcello/MEGAsync/Promotion/FG/01/transcript_text_only.txt',
@@ -43,18 +42,12 @@ model.visualize_hierarchy().show()
 
 
 # Visualize Topic Terms
-#model.visualize_barchart().show()
+# model.visualize_barchart().show()
 
 
 # Visualize Topic Similarity
-#model.visualize_heatmap().show()
+# model.visualize_heatmap().show()
 
 
 # Visualize Term Score Decline
-#model.visualize_term_rank().show()
-
-
-
-
-
-
+# model.visualize_term_rank().show()
