@@ -1,7 +1,33 @@
+
+# edit the transcript without speakers (bad idea)
 1. paste transcript in vim
 2. remove speaker lines:
-:g/Sprecher/d
+    :g/Sprecher/d
 3. check for empty lines or timestamps and remove them
 
 4. remove empty space at the end of each line
-:%s/\s\+$//e
+    :%s/\s\+$//e
+
+# set a semicolon after 'Sprecher'
+
+The current transcript looks like this:
+00:07:59 Sprecher 2 
+So yeah, now we start with the first question related to Sentire or what you tried out today, can you, ehm
+
+To make the transcript into a list of sentences we need to:
+1. set both lines (speaker and sentence) on the same line
+2. set a semicolon after 'Sprecher 2'
+
+To do this, we use vim's functions:
+1. Join lines where "Sprecher" is followed by a number:
+    :g/Sprecher \d/normal J
+
+2. Add a colon after the number:
+    :%s/\(Sprecher \d\+\) /\1: /
+
+# Prepare data for strategy 03
+
+Strategy 03 is related to issue #1, so we need a different dataset for each speakers.
+To do this we need to sort the text based on the speaker number, we do this with the following vim command:
+    :%sort /Sprecher \d\+/ r
+Then we save each speaker to a different file.
