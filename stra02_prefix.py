@@ -9,7 +9,7 @@ from bertopic import BERTopic
 # pio.renderers.default = "svg"
 
 df = pd.read_csv(
-    '/home/marcello/MEGAsync/Promotion/FG/01/transcript_text_only.txt',
+    '/home/marcello/MEGAsync/Promotion/FG/01/01_transcript_stra02.txt',
     sep='\r')
 
 list_of_sentences = df.values.tolist()
@@ -21,9 +21,9 @@ for sentence in list_of_sentences:
 model = BERTopic(calculate_probabilities=True)
 topics, probs = model.fit_transform(docs)
 
-print("get_topic_info: ", model.get_topic_info())
-
-print("get_topic: ", model.get_topic(0))
+print("Numbers of topics in topic_models[0]: ",
+      len(model.get_topic_info()))
+print("get_topic_info topic_models[0]: ", model.get_topic_info())
 
 # print(model.get_document_info(docs))
 
