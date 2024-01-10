@@ -5,13 +5,13 @@
 
 import pandas as pd
 from bertopic import BERTopic
-from bertopic.representation import MaximalMarginalRelevance, KeyBERTInspired
+from bertopic.representation import MaximalMarginalRelevance
 from bertopic.vectorizers import ClassTfidfTransformer
 from hdbscan import HDBSCAN
 from sentence_transformers import SentenceTransformer
 from sklearn.feature_extraction.text import CountVectorizer
 from umap import UMAP
-import matplotlib.pyplot as plt
+
 
 class TopicModeling:
     def __init__(self, data_path):
@@ -23,7 +23,7 @@ class TopicModeling:
         self.embeddings = self.embedding_model.encode(self.docs,
                                                       show_progress_bar=True)
         self.umap_model = UMAP(n_neighbors=15, n_components=2, min_dist=0.0,
-                              metric='cosine', random_state=42)
+                               metric='cosine', random_state=42)
         self.hdbscan_model = HDBSCAN(min_cluster_size=5, metric='euclidean',
                                      cluster_selection_method='eom',
                                      prediction_data=True)
@@ -46,8 +46,8 @@ class TopicModeling:
     def fit_transform(self):
         if self.topic_model is None:
             self._initialize_topic_model()
-        self.topics, self.probs = self.topic_model.fit_transform(self.docs,
-                                                                 self.embeddings)
+        self.topics, self.probs = self.topic_model.\
+            fit_transform(self.docs, self.embeddings)
 
     def _visualize(self, plot_object, show=True, save_path=None):
         if show:
@@ -58,11 +58,12 @@ class TopicModeling:
     def visualize_documents(self, use_reduced_embeddings=False, show=True,
                             save_path=None):
         if self.topic_model is None:
-            raise ValueError("Topic model not initialized. Call fit_transform() first.")
+            raise ValueError(
+                "Topic model not initialized. Call fit_transform() first.")
         if use_reduced_embeddings:
             reduced_embeddings = UMAP(n_neighbors=10, n_components=2,
-                                      min_dist=0.0,
-                                      metric='cosine').fit_transform(self.embeddings)
+                                      min_dist=0.0, metric='cosine').\
+                fit_transform(self.embeddings)
             plot_object = self.topic_model.visualize_documents(
                 self.docs, reduced_embeddings=reduced_embeddings
             )
@@ -74,55 +75,65 @@ class TopicModeling:
 
     def get_topic_info(self):
         if self.topic_model is None:
-            raise ValueError("Topic model not initialized. Call fit_transform() first.")
+            raise ValueError(
+                "Topic model not initialized. Call fit_transform() first.")
         return self.topic_model.get_topic_info()
 
     def get_topic(self, topic_id):
         if self.topic_model is None:
-            raise ValueError("Topic model not initialized. Call fit_transform() first.")
+            raise ValueError(
+                "Topic model not initialized. Call fit_transform() first.")
         return self.topic_model.get_topic(topic_id)
 
     def get_document_info(self):
         if self.topic_model is None:
-            raise ValueError("Topic model not initialized. Call fit_transform() first.")
+            raise ValueError(
+                "Topic model not initialized. Call fit_transform() first.")
         return self.topic_model.get_document_info(self.docs)
 
     def visualize_topics(self, show=True, save_path=None):
         if self.topic_model is None:
-            raise ValueError("Topic model not initialized. Call fit_transform() first.")
+            raise ValueError(
+                "Topic model not initialized. Call fit_transform() first.")
         plot_object = self.topic_model.visualize_topics()
         self._visualize(plot_object, show, save_path)
 
     def visualize_distribution(self, prob, show=True, save_path=None):
         if self.topic_model is None:
-            raise ValueError("Topic model not initialized. Call fit_transform() first.")
+            raise ValueError(
+                "Topic model not initialized. Call fit_transform() first.")
         plot_object = self.topic_model.visualize_distribution(prob)
         self._visualize(plot_object, show, save_path)
 
     def visualize_hierarchy(self, show=True, save_path=None):
         if self.topic_model is None:
-            raise ValueError("Topic model not initialized. Call fit_transform() first.")
+            raise ValueError(
+                "Topic model not initialized. Call fit_transform() first.")
         plot_object = self.topic_model.visualize_hierarchy()
         self._visualize(plot_object, show, save_path)
 
     def visualize_barchart(self, show=True, save_path=None):
         if self.topic_model is None:
-            raise ValueError("Topic model not initialized. Call fit_transform() first.")
+            raise ValueError(
+                "Topic model not initialized. Call fit_transform() first.")
         plot_object = self.topic_model.visualize_barchart()
         self._visualize(plot_object, show, save_path)
 
     def visualize_heatmap(self, show=True, save_path=None):
         if self.topic_model is None:
-            raise ValueError("Topic model not initialized. Call fit_transform() first.")
+            raise ValueError(
+                "Topic model not initialized. Call fit_transform() first.")
         plot_object = self.topic_model.visualize_heatmap()
         self._visualize(plot_object, show, save_path)
 
     def visualize_term_rank(self, show=True, save_path=None):
         # Assuming 'model' was intended to be 'self'
         if self.topic_model is None:
-            raise ValueError("Topic model not initialized. Call fit_transform() first.")
+            raise ValueError(
+                "Topic model not initialized. Call fit_transform() first.")
         plot_object = self.topic_model.visualize_term_rank()
         self._visualize(plot_object, show, save_path)
+
 
 # Example usage:
 data_path = '/home/marcello/MEGAsync/Promotion/FG/01/01_transcript.txt'
@@ -130,22 +141,21 @@ topic_modeling_instance = TopicModeling(data_path)
 topic_modeling_instance.fit_transform()
 
 # Visualize documents
-topic_modeling_instance.visualize_documents( use_reduced_embeddings=True,
-                                            show=True,
-                                            save_path='figs/visualize_documents.svg')
+topic_modeling_instance.visualize_documents(
+    use_reduced_embeddings=True, show=True,
+    save_path='figs/visualize_documents.svg')
 
 # Other visualizations
-topic_modeling_instance.visualize_topics(show=True,
-                                         save_path='figs/visualize_topics.svg')
+topic_modeling_instance.visualize_topics(
+    show=True, save_path='figs/visualize_topics.svg')
 topic_modeling_instance.visualize_distribution(
-    topic_modeling_instance.probs[0], show=True, save_path='figs/visualize_distribution.svg'
-)
-topic_modeling_instance.visualize_hierarchy(show=True,
-                                            save_path='figs/visualize_hierarchy.svg')
-topic_modeling_instance.visualize_barchart(show=True,
-                                           save_path='figs/visualize_barchart.svg')
-topic_modeling_instance.visualize_heatmap(show=True,
-                                          save_path='figs/visualize_heatmap.svg')
-topic_modeling_instance.visualize_term_rank(show=True,
-                                            save_path='figs/visualize_term_rank.svg')
-
+    topic_modeling_instance.probs[0], show=True,
+    save_path='figs/visualize_distribution.svg')
+topic_modeling_instance.visualize_hierarchy(
+    show=True, save_path='figs/visualize_hierarchy.svg')
+topic_modeling_instance.visualize_barchart(
+    show=True, save_path='figs/visualize_barchart.svg')
+topic_modeling_instance.visualize_heatmap(
+    show=True, save_path='figs/visualize_heatmap.svg')
+topic_modeling_instance.visualize_term_rank(
+    show=True, save_path='figs/visualize_term_rank.svg')
