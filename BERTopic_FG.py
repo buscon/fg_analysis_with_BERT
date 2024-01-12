@@ -39,9 +39,9 @@ class TopicModeling:
         self.topic_model = BERTopic(
             embedding_model=self.embedding_model, umap_model=self.umap_model,
             hdbscan_model=self.hdbscan_model,
-            vectorizer_model=self.vectorizer_model,
+#            vectorizer_model=self.vectorizer_model,
             representation_model=self.representation_model,
-            ctfidf_model=self.ctfidf_model,
+#            ctfidf_model=self.ctfidf_model,
             zeroshot_topic_list=self.zeroshot_topic_list,
             zeroshot_min_similarity=.85,
             top_n_words=10, verbose=True, calculate_probabilities=True
@@ -139,29 +139,3 @@ class TopicModeling:
         self._visualize(plot_object, show, save_path)
 
 
-# Example usage:
-DATA_PATH = '/home/marcello/MEGAsync/Promotion/FG/01/01_transcript.txt'
-topic_modeling_instance = TopicModeling(DATA_PATH)
-topic_modeling_instance.fit_transform()
-
-print(topic_modeling_instance.get_topic_info())
-
-# Visualize documents
-topic_modeling_instance.visualize_documents(
-    use_reduced_embeddings=True, show=True,
-    save_path='figs/visualize_documents.svg')
-
-# Other visualizations
-topic_modeling_instance.visualize_topics(
-    show=True, save_path='figs/visualize_topics.svg')
-topic_modeling_instance.visualize_distribution(
-    topic_modeling_instance.probs[0], show=True,
-    save_path='figs/visualize_distribution.svg')
-# topic_modeling_instance.visualize_hierarchy(
-#     show=True, save_path='figs/visualize_hierarchy.svg')
-# topic_modeling_instance.visualize_barchart(
-#     show=True, save_path='figs/visualize_barchart.svg')
-# topic_modeling_instance.visualize_heatmap(
-#     show=True, save_path='figs/visualize_heatmap.svg')
-# topic_modeling_instance.visualize_term_rank(
-#     show=True, save_path='figs/visualize_term_rank.svg')
