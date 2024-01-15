@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
-# https://maartengr.github.io/BERTopic/getting_started/semisupervised/semisupervised.html
+# based on
+# https://maartengr.github.io/BERTopic/getting_started/merge/merge.html
 
 import pandas as pd
 import re
@@ -27,6 +28,7 @@ for sentence in list_of_sentences:
 # process the data, create three lists:
 #   1. list of sentences
 #   2. list of speakers
+#   3. dict of which speaker spoke which sentence
 
 # dict of Speakers. each value will be a list of sentences of each speaker.
 speaker_lists = {f"Sprecher{i}": [] for i in range(1, 6)}
@@ -38,13 +40,13 @@ for line in lines:
         sentence = match.group(2).lstrip()  # Remove leading spaces
         speaker_lists[speaker].append(sentence)
 
-
 # Pre-calculate embeddings
 # embedding_model = SentenceTransformer("all-MiniLM-L6-v2")
 embedding_model = SentenceTransformer("WhereIsAI/UAE-Large-V1")
-embeddings = []
+embeddings = dict.fromkeys(speaker_lists.keys())
 for speaker in speaker_lists:
-    embeddings = embedding_model.encode(speaker_lists, show_progress_bar=True)
+    embeddings[speaker] = embedding_model.encode(speaker_lists[speaker],
+                                                 show_progress_bar=True)
 
 # Preventing Stochastic Behavior
 umap_model = UMAP(n_neighbors=20, n_components=3, min_dist=0.0,
@@ -69,30 +71,38 @@ ctfidf_model = ClassTfidfTransformer(reduce_frequent_words=True)
 # Diversify topic representation
 representation_model = MaximalMarginalRelevance(diversity=0.5)
 
-topic_model = BERTopic(
-    # Pipeline models
-    embedding_model=embedding_model, umap_model=umap_model,
-    hdbscan_model=hdbscan_model,
-    vectorizer_model=vectorizer_model,
-    representation_model=representation_model,
-    ctfidf_model=ctfidf_model,
-    # Hyperparameters
-    top_n_words=10, verbose=True, calculate_probabilities=True
-)
+topic_models = dict.fromkeys(speaker_lists.keys())
 
-topics, probs = topic_model.fit_transform(speaker_lists, y=sentence_to_speaker)
+for speaker in topic_models:
+    topic_models[speaker] = BERTopic(
+        # Pipeline models
+        embedding_model=embedding_model, umap_model=umap_model,
+        hdbscan_model=hdbscan_model,
+        vectorizer_model=vectorizer_model,
+        representation_model=representation_model,
+        ctfidf_model=ctfidf_model,
+        # Hyperparameters
+        top_n_words=10, verbose=True, calculate_probabilities=True
+    ).fit(speaker_lists[speaker])
+    print("Number of topics for {}: {}".format(speaker,
+                                               len(topic_models[speaker].get_topic_info())))
+    print("Topics for {}: {}".format(speaker,
+                                               topic_models[speaker].get_topic_info()))
 
-new_topics = topic_model.reduce_outliers(docs, topics)
+# (dis)similarity can be tweaked using the min_similarity parameter.
+# Increasing this value will increase the change of adding new topics. In
+# contrast, decreasing this value will make it more strict and threfore
+# decrease the change of adding new topics.
+merged_model = BERTopic.merge_models(list(topic_models.values()),
+                                     min_similarity=0.9)
 
-print(topic_model.get_topic_info())
-
+print("Number of merged topics: {}".format(len(merged_model.get_topic_info())))
+print("merged topics: {}".format(merged_model.get_topic_info()))
+print("merged topics names: {}".format(merged_model.get_topic_info().Name))
 
 # Run the visualization with the original embeddings
-topic_model.visualize_documents(docs, embeddings=embeddings).show()
+new_docs = [item for sublist in list(speaker_lists.values()) for item in sublist]
 
-# Reduce dimensionality of embeddings, this step is optional but much faster to
-# perform iteratively:
-reduced_embeddings = UMAP(n_neighbors=10, n_components=2, min_dist=0.0,
-                          metric='cosine').fit_transform(embeddings)
-topic_model.visualize_documents(docs,
-                                reduced_embeddings=reduced_embeddings).show()
+merged_model.visualize_documents(new_docs).write_html("figs/03_merged_model.html")
+
+

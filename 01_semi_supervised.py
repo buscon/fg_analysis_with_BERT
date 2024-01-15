@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+# based on
 # https://maartengr.github.io/BERTopic/getting_started/semisupervised/semisupervised.html
 
 import pandas as pd
@@ -8,12 +9,16 @@ import re
 from bertopic import BERTopic
 from bertopic.representation import MaximalMarginalRelevance, KeyBERTInspired
 from bertopic.vectorizers import ClassTfidfTransformer
+
 from hdbscan import HDBSCAN
+
 from sentence_transformers import SentenceTransformer
+
 from sklearn.feature_extraction.text import CountVectorizer
+
 from umap import UMAP
 
-
+# read the transcript
 df = pd.read_csv('Data/01_transcript.txt', sep='\r')
 
 # make the dataframe into a list of sentences
@@ -24,20 +29,19 @@ lines = []
 for sentence in list_of_sentences:
     lines.append(sentence[0].replace('\xa0', ''))
 
-# process the data, create three lists:
-#   1. list of sentences
-#   2. list of speakers
+# process the data, create two lists:
+# list of speakers
+# list of which speaker of each sentence
 
-docs = []
 speaker_list = set()  # Using a set to store unique speakers
 sentence_to_speaker = []
+docs = []
 
 for line in lines:
     match = re.match(r"(Sprecher\d+): (.+)$", line)
     if match:
         speaker = match.group(1)
-        sentence = match.group(2)
-        docs.append(sentence)
+        docs.append(match.group(2))
         speaker_list.add(speaker)
         sentence_to_speaker.append(int(speaker.split("Sprecher")[1]))
 
@@ -47,7 +51,7 @@ embedding_model = SentenceTransformer("WhereIsAI/UAE-Large-V1")
 embeddings = embedding_model.encode(docs, show_progress_bar=True)
 
 # Preventing Stochastic Behavior
-umap_model = UMAP(n_neighbors=20, n_components=3, min_dist=0.0,
+umap_model = UMAP(n_neighbors=17, n_components=3, min_dist=0.0,
                   metric='cosine', random_state=42)
 
 # Controlling Number of Topics
@@ -85,10 +89,12 @@ topics, probs = topic_model.fit_transform(docs, y=sentence_to_speaker)
 new_topics = topic_model.reduce_outliers(docs, topics)
 
 print(topic_model.get_topic_info())
+print(topic_model.get_topic_info().Name)
 
 
 # Run the visualization with the original embeddings
-topic_model.visualize_documents(docs, embeddings=embeddings).show()
+topic_model.visualize_documents(docs,
+                                embeddings=embeddings).write_html("figs/01_semi_supervised.html")
 
 # Reduce dimensionality of embeddings, this step is optional but much faster to
 # perform iteratively:
