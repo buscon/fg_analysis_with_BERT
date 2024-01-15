@@ -94,7 +94,7 @@ print(topic_model.get_topic_info().Name)
 
 # Run the visualization with the original embeddings
 topic_model.visualize_documents(docs,
-                                embeddings=embeddings).write_html("figs/01_semi_supervised.html")
+                                embeddings=embeddings).write_image("figs/01_semi_supervised.png")
 
 # Reduce dimensionality of embeddings, this step is optional but much faster to
 # perform iteratively:

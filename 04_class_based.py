@@ -97,7 +97,8 @@ topics_per_class = topic_model.topics_per_class(docs, classes=speaker_list)
 # topic_model.visualize_topics_per_class(topics_per_class,
 #                                        top_n_topics=10).show()
 topic_model.visualize_documents(docs,
-                                embeddings=embeddings).write_html("figs/04_class_based.html")
+                                embeddings=embeddings).write_image("figs/04_class_based.png")
+# .write_html("figs/04_class_based.html")
 
 
 # Run the visualization with the original embeddings

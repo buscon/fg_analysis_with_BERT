@@ -103,6 +103,7 @@ print("merged topics names: {}".format(merged_model.get_topic_info().Name))
 # Run the visualization with the original embeddings
 new_docs = [item for sublist in list(speaker_lists.values()) for item in sublist]
 
-merged_model.visualize_documents(new_docs).write_html("figs/03_merged_model.html")
+merged_model.visualize_documents(new_docs).write_image("figs/03_merged_model.png")
+# merged_model.visualize_documents(new_docs).write_html("figs/03_merged_model.html")
 
 

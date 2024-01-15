@@ -73,7 +73,8 @@ print("get_topic_info Names: \n", topic_model.get_topic_info().Name)
 
 # Run the visualization with the original embeddings
 topic_model.visualize_documents(docs,
-                                embeddings=embeddings).write_html("figs/05_zero_shot.html")
+                                embeddings=embeddings).write_image("figs/05_zero_shot.png")
+# .write_html("figs/05_zero_shot.html")
 
 # Reduce dimensionality of embeddings, this step is optional but much faster to
 # perform iteratively:
