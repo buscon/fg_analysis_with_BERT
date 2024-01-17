@@ -3,9 +3,11 @@
 # based on
 # https://maartengr.github.io/BERTopic/getting_started/semisupervised/semisupervised.html
 
+import configparser
 import pandas as pd
 import re
 
+from classes.custom_log_bertopic import BERTopicModified, LoggerToFile
 from bertopic import BERTopic
 from bertopic.representation import MaximalMarginalRelevance, KeyBERTInspired
 from bertopic.vectorizers import ClassTfidfTransformer
@@ -18,8 +20,30 @@ from sklearn.feature_extraction.text import CountVectorizer
 
 from umap import UMAP
 
+
+# Create an instance of the ConfigParser class
+config = configparser.ConfigParser()
+
+# Read the contents of the `config.ini` file:
+config.read('Config/config.ini')
+
+# Access values from the configuration file:
+interview_transcript = config['FILES']['interview_transcript']
+
+# language model
+language_model = config['MODELS']['embedding_model']
+
+# UMAP parameters
+n_neighbors = config['UMAP'].getint('n_neighbors')
+n_components = config['UMAP'].getint('n_components')
+min_dist = config['UMAP'].getfloat('min_dist')
+
+# HDBSCAN parameters
+min_cluster_size = config['HDBSCAN'].getint('min_cluster_size')
+
 # read the transcript
-df = pd.read_csv('Data/01_transcript.txt', sep='\r')
+# df = pd.read_csv('Data/01_transcript.txt', sep='\r')
+df = pd.read_csv(interview_transcript, sep='\r')
 
 # make the dataframe into a list of sentences
 list_of_sentences = df.values.tolist()
@@ -47,15 +71,15 @@ for line in lines:
 
 # Pre-calculate embeddings
 # embedding_model = SentenceTransformer("all-MiniLM-L6-v2")
-embedding_model = SentenceTransformer("WhereIsAI/UAE-Large-V1")
+embedding_model = SentenceTransformer(language_model)
 embeddings = embedding_model.encode(docs, show_progress_bar=True)
 
 # Preventing Stochastic Behavior
-umap_model = UMAP(n_neighbors=17, n_components=3, min_dist=0.0,
-                  metric='cosine', random_state=42)
+umap_model = UMAP(n_neighbors=n_neighbors, n_components=n_components,
+                  min_dist=min_dist, metric='cosine', random_state=42)
 
 # Controlling Number of Topics
-hdbscan_model = HDBSCAN(min_cluster_size=5, metric='euclidean',
+hdbscan_model = HDBSCAN(min_cluster_size=min_cluster_size, metric='euclidean',
                         cluster_selection_method='eom', prediction_data=True)
 
 # Here, we will ignore English stopwords and infrequent words. Moreover, by
@@ -82,6 +106,7 @@ topic_model = BERTopic(
     ctfidf_model=ctfidf_model,
     # Hyperparameters
     top_n_words=10, verbose=True, calculate_probabilities=True
+#    log_to_file=True, log_file_path="my_log_file.log"
 )
 
 topics, probs = topic_model.fit_transform(docs, y=sentence_to_speaker)
