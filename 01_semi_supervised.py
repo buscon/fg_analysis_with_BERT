@@ -7,6 +7,7 @@ import configparser
 import pandas as pd
 import re
 
+from datetime import datetime
 from classes.custom_log_bertopic import BERTopicModified, LoggerToFile
 from bertopic import BERTopic
 from bertopic.representation import MaximalMarginalRelevance, KeyBERTInspired
@@ -97,7 +98,9 @@ ctfidf_model = ClassTfidfTransformer(reduce_frequent_words=True)
 # Diversify topic representation
 representation_model = MaximalMarginalRelevance(diversity=0.5)
 
-topic_model = BERTopic(
+current_datetime = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+
+topic_model = BERTopicModified(
     # Pipeline models
     embedding_model=embedding_model, umap_model=umap_model,
     hdbscan_model=hdbscan_model,
@@ -105,8 +108,8 @@ topic_model = BERTopic(
     representation_model=representation_model,
     ctfidf_model=ctfidf_model,
     # Hyperparameters
-    top_n_words=10, verbose=True, calculate_probabilities=True
-#    log_to_file=True, log_file_path="my_log_file.log"
+    top_n_words=10, verbose=True, calculate_probabilities=True,
+    log_to_file=True, log_file_path="Logs/" + current_datetime + "_my_log_file.log"
 )
 
 topics, probs = topic_model.fit_transform(docs, y=sentence_to_speaker)
