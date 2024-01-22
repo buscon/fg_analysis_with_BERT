@@ -1,5 +1,11 @@
+# distribution
 env/*
 figs/*
+
+# logs, swap files
 Logs/*
-.swp
-.pyc
+*.swp
+
+# Byte-compiled 
+__pycache__/
+*.py[cod]
