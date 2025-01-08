@@ -1,6 +1,8 @@
 # distribution
 env/*
+venv/*
 figs/*
+Data/*
 
 # logs, swap files
 Logs/*

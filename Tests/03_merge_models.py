@@ -15,7 +15,7 @@ from sklearn.feature_extraction.text import CountVectorizer
 from umap import UMAP
 
 
-df = pd.read_csv('Data/01_transcript.txt', sep='\r')
+df = pd.read_csv('Data/Transcript_01_Reformatted.txt', sep='\r')
 
 # make the dataframe into a list of sentences
 list_of_sentences = df.values.tolist()

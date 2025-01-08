@@ -11,7 +11,7 @@ from umap import UMAP
 
 
 # read the transcript
-df = pd.read_csv('Data/01_transcript.txt', sep='\r')
+df = pd.read_csv('Data/Transcript_01_Reformatted.txt', sep='\r')
 
 # make the dataframe into a list of sentences
 list_of_sentences = df.values.tolist()
@@ -68,8 +68,8 @@ print(topic_model.get_topic_info().Name)
 
 # Run the visualization with the original embeddings
 topic_model.visualize_documents(docs,
-                                embeddings=embeddings).write_image("figs/02_prefix_speaker.png")
-# .write_html("figs/02_prefix_speaker.html")
+#                                embeddings=embeddings).write_image("figs/02_prefix_speaker.png")
+                                embeddings=embeddings).write_html("figs/02_prefix_speaker.html")
 
 # Reduce dimensionality of embeddings, this step is optional but much faster to
 # perform iteratively:
