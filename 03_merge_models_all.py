@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-import configparser
 import os
 import re
 import pandas as pd
@@ -8,19 +7,17 @@ from bertopic import BERTopic
 from bertopic.representation import MaximalMarginalRelevance
 from bertopic.vectorizers import ClassTfidfTransformer
 from hdbscan import HDBSCAN
-from sentence_transformers import SentenceTransformer
 from sklearn.feature_extraction.text import CountVectorizer
+from sentence_transformers import SentenceTransformer
 from umap import UMAP
-import matplotlib.pyplot as plt
 import numpy as np
 
 # Load transcripts from all three files
 transcripts = []
 for i in range(1, 4):
-    df = pd.read_csv(f'Data/Transcript_0{i}_Reformatted.txt', sep='\r')
-    list_of_sentences = df.values.tolist()
-    lines = [sentence[0].replace('\xa0', '') for sentence in list_of_sentences]
-    transcripts.extend(lines)
+    with open(f"Data/Transcript_0{i}_Reformatted.txt", "r", encoding="utf-8") as file:
+        lines = file.read().splitlines()
+        transcripts.extend(lines)
 
 # Process the data to extract speakers and their sentences
 speaker_lists = {}
@@ -34,27 +31,22 @@ for line in transcripts:
         speaker_lists[speaker].append(sentence)
 
 # Pre-calculate embeddings
-embedding_model = SentenceTransformer("WhereIsAI/UAE-Large-V1")
+embedding_model = SentenceTransformer("all-MiniLM-L6-v2")
 embeddings = {speaker: embedding_model.encode(sentences, show_progress_bar=True)
               for speaker, sentences in speaker_lists.items()}
 
-# Prevent stochastic behavior
-umap_model = UMAP(n_neighbors=20, n_components=3, min_dist=0.0,
-                  metric='cosine', random_state=42)
+# UMAP and HDBSCAN configuration
+umap_model = UMAP(n_neighbors=15, n_components=5, min_dist=0.0,
+                  metric="cosine", random_state=42)
 
-# Control number of topics
-hdbscan_model = HDBSCAN(min_cluster_size=5, metric='euclidean',
-                        cluster_selection_method='eom', prediction_data=True)
+hdbscan_model = HDBSCAN(min_cluster_size=7, metric="euclidean",  # Increased min_cluster_size for coarser clusters
+                        cluster_selection_method="eom", prediction_data=True)
 
-# Vectorizer setup
+# Vectorizer and representation setup
 vectorizer_model = CountVectorizer(stop_words="english", min_df=2, max_df=0.75,
                                    ngram_range=(1, 2))
-
-# Reduce the impact of frequent words
-ctfidf_model = ClassTfidfTransformer(reduce_frequent_words=True)
-
-# Diversify topic representation
 representation_model = MaximalMarginalRelevance(diversity=0.5)
+ctfidf_model = ClassTfidfTransformer(reduce_frequent_words=True)
 
 # Fit BERTopic models for each speaker
 topic_models = {}
@@ -66,45 +58,41 @@ for speaker, sentences in speaker_lists.items():
         vectorizer_model=vectorizer_model,
         representation_model=representation_model,
         ctfidf_model=ctfidf_model,
-        top_n_words=10, verbose=True, calculate_probabilities=True
+        verbose=True
     ).fit(sentences)
     print(f"Number of topics for {speaker}: {len(topic_models[speaker].get_topic_info())}")
 
-# Merge topic models
-merged_model = BERTopic.merge_models(list(topic_models.values()),
-                                     min_similarity=0.9)
+# Merge topic models with stricter merging criteria
+merged_model = BERTopic.merge_models(list(topic_models.values()), min_similarity=0.92)
 
-print(f"Number of merged topics: {len(merged_model.get_topic_info())}")
+print(f"Number of merged topics before limiting: {len(merged_model.get_topic_info())}")
 
-# Post-process to filter trivial topics
-def filter_trivial_topics(topic_model, keywords_to_remove):
+# Function to limit topics to a maximum number
+def limit_topics(topic_model, max_topics):
     topic_info = topic_model.get_topic_info()
-    filtered_topics = topic_info[
-        (topic_info['Name'].str.len() > 10) &  # Remove very short topics
-        (~topic_info['Name'].str.contains('|'.join(keywords_to_remove), case=False))  # Filter noisy topics
-    ]
-    topic_model.topic_info = filtered_topics
+    if len(topic_info) > max_topics:
+        topics_to_keep = topic_info.sort_values(by='Count', ascending=False).head(max_topics)
+        filtered_topic_ids = topics_to_keep['Topic'].tolist()
+
+        # Keep only the top topics
+        topic_model.topic_info = topic_info[topic_info['Topic'].isin(filtered_topic_ids)]
     return topic_model
 
-# Apply filtering
-keywords_to_remove = ['yep', 'like', 'say', 'think', 'yeah', 'ok', 'use', 'thank', 'good', 'fine']
-merged_model = filter_trivial_topics(merged_model, keywords_to_remove)
+# Limit the number of topics to a range of 20–25
+merged_model = limit_topics(merged_model, max_topics=25)
+print(f"Number of merged topics after limiting: {len(merged_model.get_topic_info())}")
 
-# Run visualization with original embeddings
-new_docs = [sentence for sublist in speaker_lists.values() for sentence in sublist]
-merged_model.visualize_documents(new_docs).write_image("figs/03_merged_model.png")
-
-# Save filtered topic info
+# Save final refined topics
 topic_info = merged_model.get_topic_info()
 filtered_topics = topic_info[topic_info['Topic'] > 0]
-filtered_topics.to_csv('output/03_refined_topics.csv', index=False)
+filtered_topics.to_csv("output/03_refined_topics.csv", index=False)
 
 # Flatten embeddings to match sentences for visualization
 flattened_embeddings = np.vstack(list(embeddings.values()))
 
-# Run visualization with flattened embeddings
+# Visualize the merged topics
 try:
-    merged_model.visualize_documents(new_docs, embeddings=flattened_embeddings).write_html("figs/03_topics.html")
+    merged_model.visualize_documents(transcripts, embeddings=flattened_embeddings).write_html("figs/03_topics.html")
 except ValueError:
-    print("Warning: Document visualization skipped due to empty embeddings.")
+    print("Visualization skipped due to missing embeddings.")
 
